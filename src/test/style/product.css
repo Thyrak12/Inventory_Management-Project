@@ -1,5 +1,5 @@
-/* Orders Page Container */
-.orders-page {
+/* Products Page Container */
+.products-page {
   padding: 2rem;
   background-color: #f8fafc;
   min-height: 100vh;
@@ -25,7 +25,7 @@
   color: #3498db;
 }
 
-.add-order-btn {
+.add-product-btn {
   background-color: #3498db;
   color: white;
   border: none;
@@ -39,7 +39,7 @@
   transition: background-color 0.2s;
 }
 
-.add-order-btn:hover {
+.add-product-btn:hover {
   background-color: #2980b9;
 }
 
@@ -59,7 +59,7 @@
 }
 
 .search-container input {
-  width: 95%;
+  width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
@@ -72,11 +72,6 @@
   top: 50%;
   transform: translateY(-50%);
   color: #a0aec0;
-}
-
-.controls-group {
-  display: flex;
-  gap: 0.75rem;
 }
 
 .filter-toggle {
@@ -92,22 +87,6 @@
 }
 
 .filter-toggle:hover {
-  background-color: #f7fafc;
-}
-
-.action-btn {
-  background: white;
-  border: 1px solid #e2e8f0;
-  padding: 0.75rem 1.25rem;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
   background-color: #f7fafc;
 }
 
@@ -150,21 +129,20 @@
   font-size: 0.9rem;
 }
 
-/* Orders Table */
-.orders-table-container {
+/* Products Table */
+.products-table-container {
   background: white;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  margin-bottom: 2rem;
 }
 
-.orders-table {
+.products-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.orders-table th {
+.products-table th {
   background-color: #f7fafc;
   padding: 1rem;
   text-align: left;
@@ -173,17 +151,17 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.orders-table td {
+.products-table td {
   padding: 1rem;
   border-bottom: 1px solid #edf2f7;
   color: #4a5568;
 }
 
-.orders-table tr:last-child td {
+.products-table tr:last-child td {
   border-bottom: none;
 }
 
-.orders-table tr:hover td {
+.products-table tr:hover td {
   background-color: #f8fafc;
 }
 
@@ -195,65 +173,22 @@
   font-weight: 500;
 }
 
-.status-badge.pending {
+.status-badge.in-stock {
+  background-color: #c6f6d5;
+  color: #22543d;
+}
+
+.status-badge.low-stock {
   background-color: #feebc8;
   color: #7b341e;
 }
 
-.status-badge.processing {
-  background-color: #bee3f8;
-  color: #2b6cb0;
-}
-
-.status-badge.shipped {
-  background-color: #c6f6d5;
-  color: #22543d;
-}
-
-.status-badge.completed {
-  background-color: #c6f6d5;
-  color: #22543d;
-}
-
-.status-badge.cancelled {
+.status-badge.out-of-stock {
   background-color: #fed7d7;
   color: #9b2c2c;
-}
-
-/* Payment Badges */
-.payment-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.payment-badge.paid {
-  background-color: #c6f6d5;
-  color: #22543d;
-}
-
-.payment-badge.pending {
-  background-color: #feebc8;
-  color: #7b341e;
-}
-
-.payment-badge.unpaid {
-  background-color: #fed7d7;
-  color: #9b2c2c;
-}
-
-.payment-badge.refunded {
-  background-color: #e9d8fd;
-  color: #553c9a;
 }
 
 /* Action Buttons */
-.action-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-
 .action-btn {
   border: none;
   background: none;
@@ -261,17 +196,6 @@
   padding: 0.5rem;
   border-radius: 4px;
   transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.print-btn {
-  color: #4a5568;
-}
-
-.print-btn:hover {
-  background-color: #edf2f7;
 }
 
 .edit-btn {
@@ -282,19 +206,12 @@
   background-color: #ebf8ff;
 }
 
-.complete-btn {
-  color: #38a169;
-}
-
-.complete-btn:hover {
-  background-color: #f0fff4;
-}
-
-.cancel-btn {
+.delete-btn {
   color: #e53e3e;
+  margin-left: 0.5rem;
 }
 
-.cancel-btn:hover {
+.delete-btn:hover {
   background-color: #fff5f5;
 }
 
@@ -305,35 +222,9 @@
   color: #a0aec0;
 }
 
-/* Order Summary */
-.order-summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.summary-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.summary-card h3 {
-  font-size: 1rem;
-  color: #718096;
-  margin-bottom: 0.5rem;
-}
-
-.summary-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #2d3748;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
-  .orders-table {
+  .products-table {
     display: block;
     overflow-x: auto;
   }
@@ -343,8 +234,115 @@
     align-items: flex-start;
     gap: 1rem;
   }
-  
-  .action-buttons {
-    flex-wrap: wrap;
-  }
 }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 8px;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #666;
+  padding: 5px;
+}
+
+.close-modal:hover {
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.cancel-btn {
+  padding: 8px 16px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #333;
+}
+
+.cancel-btn:hover {
+  background-color: #eaeaea;
+}
+
+.confirm-btn {
+  padding: 8px 16px;
+  background-color: #4a90e2;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background-color: #3a7bc8;
+}
+

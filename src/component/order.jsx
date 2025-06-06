@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { FaSearch, FaPlus, FaEdit } from 'react-icons/fa';
-import './style/order.css';
+import { FaSearch, FaPlus, FaEdit, FaTimes } from 'react-icons/fa';
+import '../style/order.css';
 
 const OrdersPage = () => {
   // Sample order data with simplified structure
@@ -13,6 +13,13 @@ const OrdersPage = () => {
   ]);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newOrder, setNewOrder] = useState({
+    productID: '',
+    customer: '',
+    qty: 1,
+    total: 0
+  });
 
   // Filter orders based on search term
   const filteredOrders = orders.filter(order => {
@@ -23,12 +30,50 @@ const OrdersPage = () => {
     );
   });
 
+  // Handle create order
+  const handleCreateOrder = () => {
+    if (!newOrder.productID || !newOrder.customer || newOrder.qty <= 0) {
+      alert('Please fill all required fields with valid values');
+      return;
+    }
+
+    const order = {
+      orderID: orders.length > 0 ? Math.max(...orders.map(o => o.orderID)) + 1 : 1001,
+      productID: newOrder.productID,
+      customer: newOrder.customer,
+      qty: parseInt(newOrder.qty),
+      total: parseFloat(newOrder.total)
+    };
+
+    setOrders([...orders, order]);
+    setShowAddModal(false);
+    setNewOrder({
+      productID: '',
+      customer: '',
+      qty: 1,
+      total: 0
+    });
+  };
+
+  // Calculate total when quantity changes
+  const handleQtyChange = (e) => {
+    const qty = parseInt(e.target.value) || 0;
+    const unitPrice = 49.99; // Example unit price - you might want to make this dynamic
+    const total = qty * unitPrice;
+    
+    setNewOrder({
+      ...newOrder,
+      qty: qty,
+      total: total
+    });
+  };
+
   return (
     <div className="orders-page">
       {/* Page Header */}
       <div className="page-header">
         <h1>Order Management</h1>
-        <button className="add-order-btn">
+        <button className="add-order-btn" onClick={() => setShowAddModal(true)}>
           <FaPlus /> Create Order
         </button>
       </div>
@@ -83,6 +128,68 @@ const OrdersPage = () => {
           </div>
         )}
       </div>
+
+      {/* Add Order Modal */}
+      {showAddModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Create New Order</h2>
+              <button className="close-modal" onClick={() => setShowAddModal(false)}>
+                <FaTimes />
+              </button>
+            </div>
+            <div className="form-group">
+              <label>Product ID <span className="required">*</span></label>
+              <input
+                type="text"
+                value={newOrder.productID}
+                onChange={(e) => setNewOrder({...newOrder, productID: e.target.value})}
+                placeholder="Enter product ID"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Customer Name <span className="required">*</span></label>
+              <input
+                type="text"
+                value={newOrder.customer}
+                onChange={(e) => setNewOrder({...newOrder, customer: e.target.value})}
+                placeholder="Enter customer name"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Quantity <span className="required">*</span></label>
+              <input
+                type="number"
+                value={newOrder.qty}
+                onChange={handleQtyChange}
+                placeholder="Enter quantity"
+                min="1"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Total Price</label>
+              <input
+                type="number"
+                value={newOrder.total.toFixed(2)}
+                readOnly
+                className="read-only"
+              />
+            </div>
+            <div className="modal-actions">
+              <button className="cancel-btn" onClick={() => setShowAddModal(false)}>
+                Cancel
+              </button>
+              <button className="confirm-btn" onClick={handleCreateOrder}>
+                Create Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
