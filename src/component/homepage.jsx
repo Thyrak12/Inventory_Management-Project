@@ -1,5 +1,5 @@
 import React from 'react';
-import './style/homepage.css'; // Assuming you have a CSS file for styling
+import '../style/homepage.css'; // Assuming you have a CSS file for styling
 
 import { 
   FaBoxes, 

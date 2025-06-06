@@ -5,6 +5,7 @@ import Dashboard from './component/homepage.jsx';
 import ProductsPage from './component/product.jsx';
 import OrdersPage from './component/order.jsx';
 import ReportPage from './component/report.jsx';
+import CustomersPage from './component/customer.jsx';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/products" element={<ProductsPage />} />
+            <Route path="/customers" element={<CustomersPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/reports" element={<ReportPage />} />
           </Routes>

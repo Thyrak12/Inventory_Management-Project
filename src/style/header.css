@@ -1,0 +1,114 @@
+/* Sidebar Container */
+.inventory-sidebar {
+    background: #2c3e50;
+    color: white;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Brand Section */
+.brand {
+    padding: 1.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.brand span {
+    color: #3498db;
+}
+
+.logo {
+    width: 36px;
+    height: 36px;
+}
+
+/* Navigation Menu */
+.nav-menu {
+    flex: 1;
+    padding: 1rem 0;
+    overflow-y: auto;
+}
+
+.nav-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-menu li a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 0.9rem 1.5rem;
+    transition: all 0.2s;
+    gap: 12px;
+}
+
+.nav-menu li a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.nav-menu li a.active {
+    background: #3498db;
+    color: white;
+}
+
+.nav-menu li a.active:hover {
+    background: #2980b9;
+}
+
+.icon {
+    font-size: 1.1rem;
+}
+
+/* User Profile */
+.user-profile {
+    padding: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar {
+    font-size: 2.2rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.username {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.user-role {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .inventory-sidebar {
+        width: 220px;
+    }
+
+    .nav-menu li a {
+        padding: 0.8rem 1.2rem;
+    }
+}

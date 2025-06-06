@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaSearch, FaFileExcel, FaFilePdf, FaPrint, FaFilter } from 'react-icons/fa';
-import './style/report.css';
+import '../style/report.css';
 
 const ReportPage = () => {
   // Sample report data

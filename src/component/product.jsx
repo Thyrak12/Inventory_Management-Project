@@ -1,175 +1,100 @@
-import React, { useState } from 'react';
-import { 
-  FaSearch, 
-  FaPlus, 
-  FaEdit, 
-  FaTrash, 
-  FaBoxOpen,
-  FaFilter,
-  FaChevronDown,
-  FaChevronUp
-} from 'react-icons/fa';
-import './style/product.css';
+import React, { useEffect, useState } from 'react';
+import ProductHeader from './product_src/page_header';
+import ProductSearchBar from './product_src/product_searchbar';
+import ProductTable from './product_src/product_table';
+import AddProductModal from '../modal/addProductModal';
+import UpdateProductModal from '../modal/updateProductModal';
+import ConfirmModal from '../modal/confirmModal';
+import '../style/product.css'; // Ensure product styles exist
+import {
+    fetchProducts,
+    addProduct,
+    updateProduct,
+    deleteProduct
+} from './product_src/product_hook';
 
 const ProductsPage = () => {
-  // Sample product data
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Wireless Headphones', sku: 'WH-1000XM4', category: 'Electronics', price: 299.99, stock: 45, status: 'In Stock' },
-    { id: 2, name: 'Bluetooth Speaker', sku: 'BS-SP200', category: 'Electronics', price: 129.99, stock: 12, status: 'Low Stock' },
-    { id: 3, name: 'Smartphone X', sku: 'SP-X-256', category: 'Electronics', price: 899.99, stock: 8, status: 'Low Stock' },
-    { id: 4, name: 'Laptop Pro', sku: 'LP-15-i7', category: 'Computers', price: 1499.99, stock: 15, status: 'In Stock' },
-    { id: 5, name: 'Desk Chair', sku: 'DC-ERG01', category: 'Furniture', price: 249.99, stock: 0, status: 'Out of Stock' },
-  ]);
+    const [products, setProducts] = useState([]);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
+    const [productID, setProductID] = useState('');
+    const [deleteId, setDeleteId] = useState(null);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [newProduct, setNewProduct] = useState({ name: '', sku: '', category: '', price: '', quantity: '' });
+    const [newUpdateProduct, setNewUpdateProduct] = useState({ name: '', sku: '', category: '', price: '', quantity: '' });
 
-  // State for filters and sorting
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    category: '',
-    status: ''
-  });
+    useEffect(() => {
+        fetchProducts(setProducts);
+    }, []);
 
-  // Filter products
-  const filteredProducts = products.filter(product => {
-    return (
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchTerm.toLowerCase())
-    ) && (
-      filters.category ? product.category === filters.category : true
-    ) && (
-      filters.status ? product.status === filters.status : true
+    const handleCreateProduct = (e) => {
+        e.preventDefault();
+        const { name, sku, category, price, quantity } = newProduct;
+        if (!name || !sku || isNaN(price) || isNaN(quantity)) {
+            alert('Fill out all fields correctly.');
+            return;
+        }
+        const status = quantity > 10 ? 'In Stock' : quantity > 0 ? 'Low Stock' : 'Out of Stock';
+        addProduct({ name, sku, category, price: parseFloat(price), quantity: parseInt(quantity), status }, setProducts, setShowAddModal, resetForm);
+    };
+
+    const resetForm = () => {
+        setNewProduct({ name: '', sku: '', category: '', price: '', quantity: '' });
+    };
+
+    const handleConfirmDelete = () => {
+        if (deleteId) deleteProduct(deleteId, setProducts, fetchProducts, setShowConfirm);
+        setDeleteId(null);
+    };
+
+    const handleEditProduct = (product) => {
+        setEditingProduct(product);
+        setProductID(product._id);
+        setNewUpdateProduct({ ...product });
+    };
+
+    const filteredProducts = products.filter(product =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.sku.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  });
 
-  // Delete product
-  const deleteProduct = (id) => {
-    setProducts(products.filter(product => product.id !== id));
-  };
+    return (
+        <div className="products-page">
+            <ProductHeader onAddClick={() => { resetForm(); setShowAddModal(true); }} />
+            <ProductSearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+            <ProductTable products={filteredProducts} onEdit={handleEditProduct} onDelete={(id) => { setDeleteId(id); setShowConfirm(true); }} />
 
-  return (
-    <div className="products-page">
-      {/* Page Header */}
-      <div className="page-header">
-        <h1>
-          <FaBoxOpen className="header-icon" />
-          Product Inventory
-        </h1>
-        <button className="add-product-btn">
-          <FaPlus /> Add Product
-        </button>
-      </div>
+            {showAddModal && (
+                <AddProductModal
+                    onClose={() => { setShowAddModal(false); resetForm(); }}
+                    newProduct={newProduct}
+                    setNewProduct={setNewProduct}
+                    onSubmit={handleCreateProduct}
+                />
+            )}
 
-      {/* Search and Filter Bar */}
-      <div className="controls-bar">
-        <div className="search-container">
-          <FaSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+            {editingProduct && (
+                <UpdateProductModal
+                    onClose={() => setEditingProduct(null)}
+                    newProduct={newUpdateProduct}
+                    setNewProduct={setNewUpdateProduct}
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        updateProduct(productID, { ...newUpdateProduct, status: 'Updated' }, setProducts, fetchProducts, setEditingProduct);
+                    }}
+                />
+            )}
+
+            {showConfirm && (
+                <ConfirmModal
+                    message="Are you sure you want to delete this product?"
+                    onConfirm={handleConfirmDelete}
+                    onCancel={() => setShowConfirm(false)}
+                />
+            )}
         </div>
-
-        <button 
-          className="filter-toggle"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <FaFilter /> Filters {showFilters ? <FaChevronUp /> : <FaChevronDown />}
-        </button>
-      </div>
-
-      {/* Filter Dropdown */}
-      {showFilters && (
-        <div className="filters-panel">
-          <div className="filter-group">
-            <label>Category</label>
-            <select
-              value={filters.category}
-              onChange={(e) => setFilters({...filters, category: e.target.value})}
-            >
-              <option value="">All Categories</option>
-              <option value="Electronics">Electronics</option>
-              <option value="Computers">Computers</option>
-              <option value="Furniture">Furniture</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Status</label>
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({...filters, status: e.target.value})}
-            >
-              <option value="">All Statuses</option>
-              <option value="In Stock">In Stock</option>
-              <option value="Low Stock">Low Stock</option>
-              <option value="Out of Stock">Out of Stock</option>
-            </select>
-          </div>
-
-          <button 
-            className="clear-filters"
-            onClick={() => setFilters({ category: '', status: '' })}
-          >
-            Clear Filters
-          </button>
-        </div>
-      )}
-
-      {/* Products Table */}
-      <div className="products-table-container">
-        <table className="products-table">
-          <thead>
-            <tr>
-              <th>Product Name</th>
-              <th>SKU</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Stock</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProducts.map(product => (
-              <tr key={product.id}>
-                <td>{product.name}</td>
-                <td>{product.sku}</td>
-                <td>{product.category}</td>
-                <td>${product.price.toFixed(2)}</td>
-                <td>{product.stock}</td>
-                <td>
-                  <span className={`status-badge ${product.status.replace(/\s+/g, '-').toLowerCase()}`}>
-                    {product.status}
-                  </span>
-                </td>
-                <td>
-                  <button className="action-btn edit-btn">
-                    <FaEdit />
-                  </button>
-                  <button 
-                    className="action-btn delete-btn"
-                    onClick={() => deleteProduct(product.id)}
-                  >
-                    <FaTrash />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredProducts.length === 0 && (
-          <div className="no-results">
-            <p>No products found matching your criteria</p>
-          </div>
-        )}
-      </div>
-
-      {/* Pagination would go here */}
-    </div>
-  );
+    );
 };
 
 export default ProductsPage;

@@ -1,15 +1,25 @@
 import React from 'react';
-import './style/header.css'; // Assuming you have a CSS file for styling
+import { NavLink, useLocation } from 'react-router-dom';
+import '../style/header.css';
 import { 
   FaTachometerAlt, 
   FaBoxes, 
   FaClipboardList, 
-  FaTruck, 
   FaChartBar,
   FaUserCircle
 } from 'react-icons/fa';
 
 const InventorySidebar = () => {
+  const location = useLocation();
+
+  const navItems = [
+    { path: '/dashboard', label: 'Dashboard', icon: <FaTachometerAlt className="icon" /> },
+    { path: '/products', label: 'Products', icon: <FaBoxes className="icon" /> },
+    { path: '/orders', label: 'Orders', icon: <FaClipboardList className="icon" /> },
+    { path: '/customers', label: 'Customer', icon: <FaChartBar className="icon" /> },
+    { path: '/reports', label: 'Reports', icon: <FaChartBar className="icon" /> }
+  ];
+
   return (
     <aside className="inventory-sidebar">
       {/* Logo and Brand Name */}
@@ -21,36 +31,19 @@ const InventorySidebar = () => {
       {/* Navigation Menu */}
       <nav className="nav-menu">
         <ul>
-          <li>
-            <a href="/dashboard" className="active">
-              <FaTachometerAlt className="icon" />
-              <span>Dashboard</span>
-            </a>
-          </li>
-          <li>
-            <a href="/products">
-              <FaBoxes className="icon" />
-              <span>Products</span>
-            </a>
-          </li>
-          <li>
-            <a href="/orders">
-              <FaClipboardList className="icon" />
-              <span>Orders</span>
-            </a>
-          </li>
-          <li>
-            <a href="/customers">
-              <FaChartBar className="icon" />
-              <span>Customer</span>
-            </a>
-          </li>
-          <li>
-            <a href="/reports">
-              <FaChartBar className="icon" />
-              <span>Reports</span>
-            </a>
-          </li>
+          {navItems.map((item) => (
+            <li key={item.path}>
+              <NavLink
+                to={item.path}
+                className={({ isActive }) => 
+                  isActive ? 'nav-link active' : 'nav-link'
+                }
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </NavLink>
+            </li>
+          ))}
         </ul>
       </nav>
 
