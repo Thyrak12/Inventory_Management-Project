@@ -1,4 +1,8 @@
 import React from 'react';
+<<<<<<< HEAD
+=======
+import '../style/login.css'; // Assuming you have a CSS file for styling
+>>>>>>> b7124f64cb0ba1e71f7c2472a0e719b93945a522
 export default function Login() {
     
   return (
