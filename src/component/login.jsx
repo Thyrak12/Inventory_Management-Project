@@ -1,5 +1,5 @@
 import React from 'react';
-import './style/login.css'; // Assuming you have a CSS file for styling
+import '../style/login.css'; // Assuming you have a CSS file for styling
 export default function Login() {
     
   return (
