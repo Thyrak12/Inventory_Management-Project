@@ -5,11 +5,7 @@ import Dashboard from './component/homepage.jsx';
 import ProductsPage from './component/product.jsx';
 import OrdersPage from './component/order.jsx';
 import ReportPage from './component/report.jsx';
-<<<<<<< HEAD
 import Login from './component/login.jsx';
-=======
-import CustomersPage from './component/customer.jsx';
->>>>>>> 13ff84194b0b3304a4ca2119a443422ebce778ba
 
 function App() {
   return (
