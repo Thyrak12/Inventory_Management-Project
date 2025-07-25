@@ -1,16 +1,18 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { logout } from '../auth/auth.js';
 import '../style/header.css';
-import { 
-  FaTachometerAlt, 
-  FaBoxes, 
-  FaClipboardList, 
+import {
+  FaTachometerAlt,
+  FaBoxes,
+  FaClipboardList,
   FaChartBar,
   FaUserCircle
 } from 'react-icons/fa';
 
 const InventorySidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: <FaTachometerAlt className="icon" /> },
@@ -19,6 +21,14 @@ const InventorySidebar = () => {
     { path: '/customers', label: 'Customer', icon: <FaChartBar className="icon" /> },
     { path: '/reports', label: 'Reports', icon: <FaChartBar className="icon" /> }
   ];
+
+  const token = localStorage.getItem('token');
+  const user = token ? JSON.parse(localStorage.getItem('user')) : { name: 'Guest', role: 'User' };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <aside className="inventory-sidebar">
@@ -35,7 +45,7 @@ const InventorySidebar = () => {
             <li key={item.path}>
               <NavLink
                 to={item.path}
-                className={({ isActive }) => 
+                className={({ isActive }) =>
                   isActive ? 'nav-link active' : 'nav-link'
                 }
               >
@@ -51,9 +61,12 @@ const InventorySidebar = () => {
       <div className="user-profile">
         <FaUserCircle className="user-avatar" />
         <div className="user-info">
-          <span className="username">Admin User</span>
-          <span className="user-role">System Administrator</span>
+          <span className="username">{user.name || 'Guest'}</span>
+          <span className="user-role">{user.role || 'User'}</span>
         </div>
+        <button className="logout-button" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
     </aside>
   );
