@@ -6,6 +6,7 @@ import ProductsPage from './component/product.jsx';
 import OrdersPage from './component/order.jsx';
 import ReportPage from './component/report.jsx';
 import Login from './component/login.jsx';
+import CustomersPage from './component/customer.jsx';
 
 function App() {
   return (

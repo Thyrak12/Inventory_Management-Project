@@ -25,13 +25,14 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  color: #212223;
 }
 
 .date-filter select {
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   border: 1px solid #ddd;
-  background-color: white;
+  background-color: #2c3e50;
 }
 
 /* Metrics Grid */
