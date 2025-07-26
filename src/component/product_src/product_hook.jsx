@@ -1,8 +1,8 @@
-import axios from 'axios';
+import API from '../../api.js'
 
 export const fetchProducts = async (setProducts) => {
     try {
-        const res = await axios.get('http://localhost:3000/products');
+        const res = await API.get('/products');
         setProducts(res.data);
     } catch (error) {
         console.error('Error fetching products:', error);
@@ -11,7 +11,7 @@ export const fetchProducts = async (setProducts) => {
 
 export const addProduct = async (product, setProducts, setShowAddModal, resetForm) => {
     try {
-        const res = await axios.post('http://localhost:3000/products', product);
+        const res = await API.post('/products', product);
         if (res.status === 201) {
             setProducts(prev => [...prev, res.data]);
             setShowAddModal(false);
@@ -24,7 +24,7 @@ export const addProduct = async (product, setProducts, setShowAddModal, resetFor
 
 export const updateProduct = async (id, updatedProduct, setProducts, fetchProducts, setEditingProduct) => {
     try {
-        const res = await axios.put(`http://localhost:3000/products/${id}`, updatedProduct);
+        const res = await API.put('/products', updatedProduct);
         if (res.status === 200) {
             setProducts(prev => prev.map(product => (product.id === id ? res.data : product)));
             await fetchProducts(setProducts);
@@ -37,7 +37,7 @@ export const updateProduct = async (id, updatedProduct, setProducts, fetchProduc
 
 export const deleteProduct = async (id, setProducts, fetchProducts, setShowConfirm) => {
     try {
-        const res = await axios.delete(`http://localhost:3000/products/${id}`);
+        const res = await API.delete('/products', { data: { id } });
         if (res.status === 200) {
             await fetchProducts(setProducts);
             setShowConfirm(false);

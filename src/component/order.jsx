@@ -1,84 +1,106 @@
 import React, { useState } from 'react';
-import { FaSearch, FaPlus, FaEdit, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTimes, FaShoppingCart } from 'react-icons/fa';
 import '../style/order.css';
 
 const OrdersPage = () => {
-  // Sample order data with simplified structure
-  const [orders, setOrders] = useState([
-    { orderID: 1001, productID: 'P001', customer: 'John Smith', qty: 3, total: 149.97 },
-    { orderID: 1002, productID: 'P002', customer: 'Sarah Johnson', qty: 5, total: 289.95 },
-    { orderID: 1003, productID: 'P003', customer: 'Mike Brown', qty: 2, total: 199.98 },
-    { orderID: 1004, productID: 'P004', customer: 'Emily Davis', qty: 1, total: 89.99 },
-    { orderID: 1005, productID: 'P005', customer: 'David Wilson', qty: 4, total: 179.96 },
-  ]);
+  // Product data with prices
+  const products = [
+    { id: 1, name: 'T-Shirt', price: 19.99 },
+    { id: 2, name: 'Jeans', price: 49.99 },
+    { id: 3, name: 'Sneakers', price: 89.99 },
+    { id: 4, name: 'Hat', price: 24.99 },
+    { id: 5, name: 'Jacket', price: 79.99 }
+  ];
 
+  const colors = ['Red', 'Blue', 'Green', 'Black', 'White'];
+  const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newOrder, setNewOrder] = useState({
-    productID: '',
-    customer: '',
-    qty: 1,
-    total: 0
+    product: '',
+    color: '',
+    size: '',
+    qty: 1
   });
 
-  // Filter orders based on search term
-  const filteredOrders = orders.filter(order => {
-    return (
-      order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.orderID.toString().includes(searchTerm) ||
-      order.productID.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewOrder({...newOrder, [name]: value});
+  };
 
-  // Handle create order
-  const handleCreateOrder = () => {
-    if (!newOrder.productID || !newOrder.customer || newOrder.qty <= 0) {
-      alert('Please fill all required fields with valid values');
+  const addToCart = () => {
+    if (!newOrder.product || newOrder.qty <= 0) {
+      alert('Please fill all required fields');
       return;
     }
 
-    const order = {
-      orderID: orders.length > 0 ? Math.max(...orders.map(o => o.orderID)) + 1 : 1001,
-      productID: newOrder.productID,
-      customer: newOrder.customer,
-      qty: parseInt(newOrder.qty),
-      total: parseFloat(newOrder.total)
+    const selectedProduct = products.find(p => p.name === newOrder.product);
+    const cartItem = {
+      id: Date.now(), // Unique ID for cart item
+      ...newOrder,
+      price: selectedProduct.price,
+      total: (selectedProduct.price * newOrder.qty).toFixed(2)
     };
 
-    setOrders([...orders, order]);
+    setCart([...cart, cartItem]);
     setShowAddModal(false);
     setNewOrder({
-      productID: '',
-      customer: '',
-      qty: 1,
-      total: 0
+      product: '',
+      color: '',
+      size: '',
+      qty: 1
     });
   };
 
-  // Calculate total when quantity changes
-  const handleQtyChange = (e) => {
-    const qty = parseInt(e.target.value) || 0;
-    const unitPrice = 49.99; // Example unit price - you might want to make this dynamic
-    const total = qty * unitPrice;
-    
-    setNewOrder({
-      ...newOrder,
-      qty: qty,
-      total: total
-    });
+  const removeFromCart = (id) => {
+    setCart(cart.filter(item => item.id !== id));
   };
+
+  const checkout = () => {
+    if (cart.length === 0) {
+      alert('Your cart is empty');
+      return;
+    }
+
+    // Generate order IDs
+    const lastOrderID = recentOrders.length > 0 ? 
+      Math.max(...recentOrders.map(o => o.orderID)) : 1000;
+      
+    const newOrders = cart.map((item, index) => ({
+      orderID: lastOrderID + index + 1,
+      date: new Date().toLocaleDateString(),
+      ...item,
+      status: 'Completed'
+    }));
+
+    // Add to recent orders
+    setRecentOrders([...newOrders, ...recentOrders]);
+    
+    // Clear cart
+    setCart([]);
+    alert('Checkout completed successfully!');
+  };
+
+  const filteredOrders = recentOrders.filter(order => 
+    order.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order.orderID.toString().includes(searchTerm) ||
+    order.date.includes(searchTerm)
+  );
+
+  const cartTotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0).toFixed(2);
 
   return (
     <div className="orders-page">
-      {/* Page Header */}
       <div className="page-header">
         <h1>Order Management</h1>
         <button className="add-order-btn" onClick={() => setShowAddModal(true)}>
-          <FaPlus /> Create Order
+          <FaPlus /> Add Product
         </button>
       </div>
 
-      {/* Search Bar */}
       <div className="controls-bar">
         <div className="search-container">
           <FaSearch className="search-icon" />
@@ -91,100 +113,165 @@ const OrdersPage = () => {
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="orders-table-container">
-        <table className="orders-table">
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>Product ID</th>
-              <th>Customer</th>
-              <th>Quantity</th>
-              <th>Total Price</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredOrders.map(order => (
-              <tr key={order.orderID}>
-                <td>#{order.orderID}</td>
-                <td>{order.productID}</td>
-                <td>{order.customer}</td>
-                <td>{order.qty}</td>
-                <td>${order.total.toFixed(2)}</td>
-                <td>
-                  <button className="action-btn edit-btn">
-                    <FaEdit />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredOrders.length === 0 && (
-          <div className="no-results">
-            <p>No orders found matching your criteria</p>
+      {/* Checkout Block */}
+      <div className="checkout-block">
+        <div className="checkout-header">
+          <FaShoppingCart className="cart-icon" />
+          <h2>Current Sale</h2>
+          <span className="cart-count">{cart.length} items</span>
+        </div>
+        
+        {cart.length > 0 ? (
+          <>
+            <div className="cart-items">
+              {cart.map(item => (
+                <div key={item.id} className="cart-item">
+                  <div className="item-info">
+                    <span className="item-name">{item.product}</span>
+                    <span className="item-details">{item.color} | {item.size} | Qty: {item.qty}</span>
+                  </div>
+                  <div className="item-price">
+                    ${item.total}
+                    <button 
+                      className="remove-item-btn"
+                      onClick={() => removeFromCart(item.id)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="cart-total">
+              <span>Total:</span>
+              <span className="total-amount">${cartTotal}</span>
+            </div>
+            <button className="checkout-btn" onClick={checkout}>
+              Confirm Checkout
+            </button>
+          </>
+        ) : (
+          <div className="empty-cart">
+            <p>Your cart is empty. Add products to begin.</p>
           </div>
         )}
       </div>
 
-      {/* Add Order Modal */}
+      {/* Recent Orders Table */}
+      <div className="table-section">
+        <h2>Recent Orders</h2>
+        <div className="orders-table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Product</th>
+                <th>Color</th>
+                <th>Size</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredOrders.map(order => (
+                <tr key={order.orderID}>
+                  <td>#{order.orderID}</td>
+                  <td>{order.date}</td>
+                  <td>{order.product}</td>
+                  <td>{order.color}</td>
+                  <td>{order.size}</td>
+                  <td>{order.qty}</td>
+                  <td>${order.price.toFixed(2)}</td>
+                  <td>${order.total}</td>
+                  <td>
+                    <span className={`status-badge ${order.status.toLowerCase()}`}>
+                      {order.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Add Product Modal */}
       {showAddModal && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>Create New Order</h2>
+              <h2>Add Product to Sale</h2>
               <button className="close-modal" onClick={() => setShowAddModal(false)}>
                 <FaTimes />
               </button>
             </div>
+            
             <div className="form-group">
-              <label>Product ID <span className="required">*</span></label>
-              <input
-                type="text"
-                value={newOrder.productID}
-                onChange={(e) => setNewOrder({...newOrder, productID: e.target.value})}
-                placeholder="Enter product ID"
+              <label>Product <span className="required">*</span></label>
+              <select
+                name="product"
+                value={newOrder.product}
+                onChange={handleInputChange}
                 required
-              />
+              >
+                <option value="">Select Product</option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.name}>
+                    {product.name} (${product.price.toFixed(2)})
+                  </option>
+                ))}
+              </select>
             </div>
+
             <div className="form-group">
-              <label>Customer Name <span className="required">*</span></label>
-              <input
-                type="text"
-                value={newOrder.customer}
-                onChange={(e) => setNewOrder({...newOrder, customer: e.target.value})}
-                placeholder="Enter customer name"
-                required
-              />
+              <label>Color</label>
+              <select
+                name="color"
+                value={newOrder.color}
+                onChange={handleInputChange}
+              >
+                <option value="">Select Color</option>
+                {colors.map((color, index) => (
+                  <option key={index} value={color}>{color}</option>
+                ))}
+              </select>
             </div>
+
+            <div className="form-group">
+              <label>Size</label>
+              <select
+                name="size"
+                value={newOrder.size}
+                onChange={handleInputChange}
+              >
+                <option value="">Select Size</option>
+                {sizes.map((size, index) => (
+                  <option key={index} value={size}>{size}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="form-group">
               <label>Quantity <span className="required">*</span></label>
               <input
                 type="number"
+                name="qty"
                 value={newOrder.qty}
-                onChange={handleQtyChange}
-                placeholder="Enter quantity"
+                onChange={handleInputChange}
                 min="1"
                 required
               />
             </div>
-            <div className="form-group">
-              <label>Total Price</label>
-              <input
-                type="number"
-                value={newOrder.total.toFixed(2)}
-                readOnly
-                className="read-only"
-              />
-            </div>
+
             <div className="modal-actions">
               <button className="cancel-btn" onClick={() => setShowAddModal(false)}>
                 Cancel
               </button>
-              <button className="confirm-btn" onClick={handleCreateOrder}>
-                Create Order
+              <button className="confirm-btn" onClick={addToCart}>
+                Add to Sale
               </button>
             </div>
           </div>
