@@ -14,17 +14,25 @@ const InventorySidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = [
+  const allNavItems = [
     { path: '/dashboard', label: 'Dashboard', icon: <FaTachometerAlt className="icon" /> },
     { path: '/products', label: 'Products', icon: <FaBoxes className="icon" /> },
     { path: '/stock', label: 'Stock', icon: <FaBoxes className="icon" /> },
     { path: '/orders', label: 'Orders', icon: <FaClipboardList className="icon" /> },
-    { path: '/users', label: 'Users Management', icon: <FaClipboardList className="icon" /> },
+    { path: '/users', label: 'Users Management', icon: <FaClipboardList className="icon" />, adminOnly: true },
     { path: '/reports', label: 'Reports', icon: <FaChartBar className="icon" /> }
   ];
 
   const token = localStorage.getItem('token');
   const user = token ? JSON.parse(localStorage.getItem('user')) : { name: 'Guest', role: 'User' };
+
+  // Filter navigation items based on user role
+  const navItems = allNavItems.filter(item => {
+    if (item.adminOnly && user.role !== 'admin') {
+      return false;
+    }
+    return true;
+  });
 
   const handleLogout = () => {
     logout();
