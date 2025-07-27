@@ -1,6 +1,6 @@
 // src/components/AdminRoute.jsx
 import { Navigate } from "react-router-dom";
-import { isAuthenticated } from "../auth/auth.js";
+import { isAuthenticated } from "./auth.js";
 
 export default function AdminRoute({ children }) {
   const isAuth = isAuthenticated();

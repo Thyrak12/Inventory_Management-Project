@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import '../style/login.css';
 
 import API from '../api.js';
-import { setToken } from '../auth/auth.js';
+import { setToken } from './auth.js';
 
 const Login = () => {
   const navigate = useNavigate();

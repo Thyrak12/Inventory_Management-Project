@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import API from "../api";
-import ProductHeader from './product_src/page_header';
-import ProductSearchBar from './product_src/product_searchbar';
-import ProductTable from './product_src/product_table';
-import AddProductModal from '../modal/addProductModal';
-import UpdateProductModal from '../modal/updateProductModal';
-import ConfirmModal from '../modal/confirmModal';
+import ProductHeader from '../component/product_src/page_header';
+import ProductSearchBar from '../component/product_src/product_searchbar';
+import ProductTable from '../component/product_src/product_table';
+import AddProductModal from '../component/modal/addProductModal';
+import UpdateProductModal from '../component/modal/updateProductModal';
+import ConfirmModal from '../component/modal/confirmModal';
 import '../style/product.css';
 
 export default function Products() {
