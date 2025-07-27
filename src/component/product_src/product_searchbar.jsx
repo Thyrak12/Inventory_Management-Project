@@ -1,63 +1,79 @@
-import React from 'react';
-import { FaSearch, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaTimes } from "react-icons/fa";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
-const ProductSearchBar = ({ 
-  searchTerm, 
-  onSearchChange, 
-  categories = [], 
-  selectedCategory 
+const ProductSearchBar = React.memo(({
+  searchTerm = '',
+  onSearchChange = () => {},
+  onSubmit = () => {},
+  onReset = () => {},
+  isLoading = false
 }) => {
-  const handleSearch = (e) => {
-    e.preventDefault();
-    onSearchChange(searchTerm, selectedCategory);
+  const [localValue, setLocalValue] = useState(searchTerm);
+  const inputRef = useRef(null);
+
+  // Sync with parent when searchTerm changes
+  useEffect(() => {
+    if (searchTerm !== localValue) {
+      setLocalValue(searchTerm);
+    }
+  }, [searchTerm]);
+
+  const handleChange = (e) => {
+    setLocalValue(e.target.value);
   };
 
-  const handleClearSearch = () => {
-    onSearchChange('', '');
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onSubmit(localValue); // Submit on Enter
+      inputRef.current?.blur(); // Optional: remove focus after submit
+    }
   };
+
+  const handleClear = () => {
+    setLocalValue('');
+    onReset();
+    inputRef.current?.focus();
+  };
+
+  // Maintain cursor position when parent updates value
+  useEffect(() => {
+    if (inputRef.current && document.activeElement === inputRef.current) {
+      const pos = inputRef.current.selectionStart;
+      requestAnimationFrame(() => {
+        inputRef.current.setSelectionRange(pos, pos);
+      });
+    }
+  }, [localValue]);
 
   return (
-    <div className="search-container">
-      <form onSubmit={handleSearch} className="search-form">
-        <div className="search-input-container">
-          <FaSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value, selectedCategory)}
-            className="search-input"
-          />
-          {(searchTerm || selectedCategory) && (
-            <button 
-              type="button"
-              onClick={handleClearSearch}
-              className="clear-search-button"
-            >
-              <FaTimes />
-            </button>
-          )}
-        </div>
-
-        <select
-          value={selectedCategory}
-          onChange={(e) => onSearchChange(searchTerm, e.target.value)}
-          className="category-select"
-        >
-          <option value="">All Categories</option>
-          {categories.map(category => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
-
-        <button type="submit" className="search-button">
-          Search
-        </button>
-      </form>
+    <div className="product-search-container">
+      <div className="product-search-input-container">
+        <FaSearch className="product-search-icon" />
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Search products..."
+          value={localValue}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          className="product-search-input"
+          disabled={isLoading}
+        />
+        {localValue && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="product-clear-search"
+            aria-label="Clear search"
+            disabled={isLoading}
+          >
+            <FaTimes />
+          </button>
+        )}
+      </div>
     </div>
   );
-};
+});
 
 export default ProductSearchBar;

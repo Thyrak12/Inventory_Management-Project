@@ -340,6 +340,11 @@
     color: #4a5568;
 }
 
+.stock-form-group-price {
+    margin-bottom: 1.5rem;
+    width: 93%;
+}
+
 .stock-form-input {
     width: 100%;
     padding: 0.625rem 1rem;

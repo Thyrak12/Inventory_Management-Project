@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { fetchVariants } from "../component/api/product_var_api.js";
+import { fetchVariants, updateStock } from "../component/api/product_var_api.js";
 import StockHeader from '../component/stock_component/header';
 import StockFilters from '../component/stock_component/filter';
 import StockTable from '../component/stock_component/table';
@@ -27,6 +27,7 @@ export default function Stock() {
     const [availableSizes, setAvailableSizes] = useState([]);
     const [availableColors, setAvailableColors] = useState([]);
     const [showStockModal, setShowStockModal] = useState(false);
+    const [notification, setNotification] = useState(null);
 
     useEffect(() => {
         const loadVariants = async () => {
@@ -40,7 +41,8 @@ export default function Stock() {
                     ...variant,
                     price: typeof variant.price === 'string' ?
                         parseFloat(variant.price) :
-                        Number(variant.price)
+                        Number(variant.price),
+                    stock: variant.stock ? Number(variant.stock) : 0
                 }));
 
                 const sizes = [...new Set(allVariants.map(v => v.size))].filter(Boolean);
@@ -65,7 +67,7 @@ export default function Stock() {
         if (variants.length > 0) {
             applyFilters(variants);
         }
-    }, [searchParams]);
+    }, [searchParams, variants]);
 
     const applyFilters = (data) => {
         const page = parseInt(searchParams.get("page")) || 1;
@@ -117,14 +119,51 @@ export default function Stock() {
 
             setVariants(updatedVariants);
             setEditingVariant(null);
-
-            setSearchParams(prev => {
-                prev.set('refresh', Date.now());
-                return prev;
-            });
+            setNotification('Variant updated successfully!');
         } catch (err) {
             console.error('Failed to update variant:', err);
             setError('Failed to update variant');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleStockUpdate = async (productId, quantity, action) => {
+        setIsLoading(true);
+        setError(null);
+        setNotification(null);
+
+        try {
+            // Find the current variant
+            const currentVariant = variants.find(v => v.id === productId);
+            if (!currentVariant) throw new Error('Product variant not found');
+
+            // Calculate new stock based on action
+            let newStock;
+            if (action === 'add') {
+                newStock = currentVariant.stock + quantity;
+            } else if (action === 'set') {
+                newStock = quantity;
+            } else {
+                throw new Error('Invalid action');
+            }
+
+            // Validate new stock
+            if (newStock < 0) throw new Error('Stock cannot be negative');
+
+            // Update via API
+            await updateStock(productId, newStock);
+
+            // Update local state
+            setVariants(prev => prev.map(v =>
+                v.id === productId ? { ...v, stock: newStock } : v
+            ));
+
+            setShowStockModal(false);
+            setNotification(`Stock ${action === 'add' ? 'added' : 'set'} successfully! New stock: ${newStock}`);
+        } catch (err) {
+            console.error('Failed to update stock:', err);
+            setError(err.message || 'Failed to update stock');
         } finally {
             setIsLoading(false);
         }
@@ -156,40 +195,13 @@ export default function Stock() {
 
     const handlePageChange = (newPage) => {
         setSearchParams(prev => {
-            prev.set('page', newPage);
+            prev.set('page', newPage.toString());
             return prev;
         });
         window.scrollTo(0, 0);
     };
 
-    const handleStockProduct = async (productId, quantity) => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            // Here you would call your API to update the stock
-            // For now, we'll simulate it with local state
-            const updatedVariants = variants.map(v =>
-                v.id === productId
-                    ? { ...v, stock: (v.stock || 0) + quantity }
-                    : v
-            );
-
-            setVariants(updatedVariants);
-            setShowStockModal(false);
-            setSearchParams(prev => {
-                prev.set('refresh', Date.now());
-                return prev;
-            });
-        } catch (err) {
-            console.error('Failed to update stock:', err);
-            setError('Failed to update stock');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Get unique products for the modal (combine name, color, size)
+    // Get unique products for the modal
     const uniqueProducts = variants.reduce((acc, variant) => {
         const existing = acc.find(p =>
             p.name === variant.name &&
@@ -202,37 +214,38 @@ export default function Stock() {
                 name: variant.name,
                 color: variant.color,
                 size: variant.size,
-                stock: variant.stock || 0
+                stock: variant.stock
             });
         }
         return acc;
     }, []);
 
     if (isLoading && variants.length === 0) {
-        return (
-            <div className="stock-loading">
-                <div className="stock-loading-spinner"></div>
-            </div>
-        );
+        return <div className="stock-loading">Loading...</div>;
     }
 
     if (error && variants.length === 0) {
         return (
             <div className="stock-error-message">
                 {error}
-                <button
-                    onClick={() => window.location.reload()}
-                    className="stock-error-retry"
-                >
-                    Retry
-                </button>
+                <button onClick={() => window.location.reload()}>Retry</button>
             </div>
         );
     }
 
     return (
         <div className="stock-management-system">
-            <StockHeader onStockProductClick={() => setShowStockModal(true)} />
+            {notification && (
+                <div className="notification">
+                    {notification}
+                    <button onClick={() => setNotification(null)}>×</button>
+                </div>
+            )}
+
+            <StockHeader
+                onStockProductClick={() => setShowStockModal(true)}
+                isLoading={isLoading}
+            />
 
             <StockFilters
                 searchTerm={searchParams.get("search") || ""}
@@ -246,11 +259,13 @@ export default function Stock() {
                 availableColors={availableColors}
                 onFilterChange={handleFilterChange}
                 onReset={handleResetFilters}
+                disabled={isLoading}
             />
 
             {error && (
                 <div className="stock-error-message">
                     {error}
+                    <button onClick={() => setError(null)}>Dismiss</button>
                 </div>
             )}
 
@@ -259,26 +274,25 @@ export default function Stock() {
                     <StockTable
                         variants={filteredVariants}
                         onEdit={setEditingVariant}
+                        isLoading={isLoading}
                     />
 
                     <div className="stock-pagination">
                         <div className="stock-pagination-info">
-                            Showing {(meta.page - 1) * meta.limit + 1} to {Math.min(meta.page * meta.limit, meta.totalItems)} of {meta.totalItems} items
+                            Showing {(meta.page - 1) * meta.limit + 1} to{' '}
+                            {Math.min(meta.page * meta.limit, meta.totalItems)} of{' '}
+                            {meta.totalItems} items
                         </div>
-
                         <div className="stock-pagination-controls">
                             <button
                                 disabled={meta.page <= 1 || isLoading}
                                 onClick={() => handlePageChange(meta.page - 1)}
-                                className="stock-pagination-button"
                             >
                                 Previous
                             </button>
-
                             <button
                                 disabled={meta.page >= meta.totalPages || isLoading}
                                 onClick={() => handlePageChange(meta.page + 1)}
-                                className="stock-pagination-button"
                             >
                                 Next
                             </button>
@@ -287,7 +301,7 @@ export default function Stock() {
                 </>
             ) : (
                 <div className="stock-empty-state">
-                    No variants found matching your filters
+                    {isLoading ? 'Loading...' : 'No variants found matching your filters'}
                 </div>
             )}
 
@@ -297,12 +311,15 @@ export default function Stock() {
                 variant={editingVariant}
                 onSubmit={handleUpdateVariant}
                 isLoading={isLoading}
+                availableColors={availableColors}
+                availableSizes={availableSizes}
             />
+
             <StockProductModal
                 show={showStockModal}
                 onClose={() => setShowStockModal(false)}
                 products={uniqueProducts}
-                onStockProduct={handleStockProduct}
+                onStockUpdate={handleStockUpdate}
                 isLoading={isLoading}
             />
         </div>

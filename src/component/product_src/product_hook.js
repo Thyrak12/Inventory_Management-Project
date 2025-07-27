@@ -1,24 +1,20 @@
 import API from '../../api.js';
 
-export const fetchProducts = async () => {
+export const fetchProducts = async (params = {}) => {
     try {
-        const response = await API.get('/products');
+        const response = await API.get('/products', { params });
         
-        // Check if response exists and has data
         if (!response || !response.data) {
             throw new Error('No data received from server');
         }
 
-        // Ensure the data is an array
-        if (!Array.isArray(response.data)) {
-            console.warn('Expected array but received:', response.data);
-            return []; // Return empty array as fallback
-        }
-
-        return response.data;
+        return {
+            data: response.data.data || [],
+            meta: response.data.meta || { page: 1, totalPages: 1 }
+        };
     } catch (error) {
         console.error('API Error - fetchProducts:', error.message);
-        throw error; // Re-throw to let component handle it
+        throw error;
     }
 };
 
@@ -63,6 +59,21 @@ export const deleteProduct = async (id) => {
         return true;
     } catch (error) {
         console.error('API Error - deleteProduct:', error.message);
+        throw error;
+    }
+};
+
+export const fetchProductCategories = async () => {
+    try {
+        const response = await API.get('/products/categories');
+        
+        if (!response || !response.data) {
+            throw new Error('No categories received');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('API Error - fetchProductCategories:', error.message);
         throw error;
     }
 };

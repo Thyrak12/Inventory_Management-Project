@@ -1,6 +1,4 @@
-import React from 'react';
-import { FaTimes } from 'react-icons/fa';
-import '../style/modal.css';
+import { FaTimes } from "react-icons/fa"; 
 
 const UpdateProductModal = ({ 
   show,
@@ -37,19 +35,6 @@ const UpdateProductModal = ({
         </div>
 
         <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-group">
-            <label htmlFor="productID">Product ID *</label>
-            <input
-              id="productID"
-              type="text"
-              name="productID"
-              value={product.productID}
-              onChange={handleChange}
-              required
-              disabled={isLoading}
-            />
-          </div>
-
           <div className="form-group">
             <label htmlFor="name">Product Name *</label>
             <input

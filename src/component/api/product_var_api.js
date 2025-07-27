@@ -3,7 +3,7 @@ import API from '../../api.js';
 export const fetchVariants = async () => {
     try {
         const response = await API.get('/product-variants');
-        
+
         // Check if response exists and has data
         if (!response || !response.data) {
             throw new Error('No data received from server');
@@ -25,7 +25,7 @@ export const fetchVariants = async () => {
 export const addProduct = async (productData) => {
     try {
         const response = await API.post('/product-variants', productData);
-        
+
         if (response.status !== 201 || !response.data) {
             throw new Error('Failed to create product');
         }
@@ -37,17 +37,21 @@ export const addProduct = async (productData) => {
     }
 };
 
-export const updateProduct = async (id, productData) => {
+export const updateStock = async (variantId, newStock) => {
     try {
-        const response = await API.put(`/product-variants/${id}`, productData);
-        
-        if (response.status !== 200 || !response.data) {
-            throw new Error('Failed to update product');
+        const token = localStorage.getItem("token");
+        const response = await API.put(`/variants/${variantId}/stock`,
+            { stock: newStock },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.status !== 200) {
+            throw new Error('Failed to update stock');
         }
 
         return response.data;
     } catch (error) {
-        console.error('API Error - updateProduct:', error.message);
+        console.error('Error updating stock:', error);
         throw error;
     }
 };
@@ -55,7 +59,7 @@ export const updateProduct = async (id, productData) => {
 export const deleteProduct = async (id) => {
     try {
         const response = await API.delete(`/product-variants/${id}`);
-        
+
         if (response.status !== 200) {
             throw new Error('Failed to delete product');
         }

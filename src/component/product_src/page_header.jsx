@@ -1,12 +1,13 @@
+// ProductHeader.js
 import React from 'react';
 import { FaPlus, FaBoxOpen } from 'react-icons/fa';
 
 const ProductHeader = ({ onAddClick }) => (
-    <div className="page-header">
-        <h1>
-            <FaBoxOpen className="header-icon" /> Product Inventory
+    <div className="product-header">
+        <h1 className="product-header-title">
+            <FaBoxOpen className="product-header-icon" /> Product Inventory
         </h1>
-        <button className="add-product-btn" onClick={onAddClick}>
+        <button className="product-add-btn" onClick={onAddClick}>
             <FaPlus /> Add Product
         </button>
     </div>

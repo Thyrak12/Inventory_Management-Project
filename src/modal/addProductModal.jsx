@@ -1,5 +1,4 @@
-import React from 'react';
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes } from "react-icons/fa"; 
 
 const AddProductModal = ({ 
     show, 
@@ -7,7 +6,7 @@ const AddProductModal = ({
     product, 
     onChange, 
     onSubmit, 
-    isLoading 
+    isLoading
 }) => {
     if (!show) return null;
 
@@ -36,20 +35,6 @@ const AddProductModal = ({
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="productID">Product ID *</label>
-                        <input
-                            id="productID"
-                            type="text"
-                            name="productID"
-                            value={product.productID}
-                            onChange={handleChange}
-                            placeholder="Enter product ID"
-                            required
-                            disabled={isLoading}
-                        />
-                    </div>
-
                     <div className="form-group">
                         <label htmlFor="name">Product Name *</label>
                         <input
