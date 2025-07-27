@@ -5,7 +5,17 @@ const OrdersTable = ({ orders }) => {
   const formatPrice = (price) => {
     if (price === undefined || price === null) return '$0.00';
     const num = typeof price === 'string' ? parseFloat(price) : Number(price);
-    return `$${num.toFixed(2)}`;
+    return isNaN(num) ? '$0.00' : `$${num.toFixed(2)}`;
+  };
+
+  const formatText = (text) => {
+    return text === undefined || text === null ? 'N/A' : text;
+  };
+
+  // Generate a unique key for each order
+  const getOrderKey = (order, index) => {
+    // Use orderID if available, otherwise fall back to index
+    return order.id ? `order-${order.id}` : `order-${index}`;
   };
 
   return (
@@ -15,7 +25,6 @@ const OrdersTable = ({ orders }) => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Order ID</th>
               <th>Date</th>
               <th>Product</th>
               <th>Color</th>
@@ -27,23 +36,30 @@ const OrdersTable = ({ orders }) => {
             </tr>
           </thead>
           <tbody>
-            {orders.map(order => (
-              <tr key={order.orderID}>
-                <td>#{order.orderID}</td>
-                <td>{order.date}</td>
-                <td>{order.product}</td>
-                <td>{order.color}</td>
-                <td>{order.size}</td>
-                <td>{order.qty}</td>
-                <td>{formatPrice(order.price)}</td>
-                <td>{formatPrice(order.total)}</td>
-                <td>
-                  <span className={`status-badge ${order.status.toLowerCase()}`}>
-                    {order.status}
-                  </span>
+            {orders.length > 0 ? (
+              orders.map((order, index) => (
+                <tr key={getOrderKey(order, index)}>
+                  <td>{formatText(order.date)}</td>
+                  <td>{formatText(order.product)}</td>
+                  <td>{formatText(order.color)}</td>
+                  <td>{formatText(order.size)}</td>
+                  <td>{formatText(order.qty)}</td>
+                  <td>{formatPrice(order.price)}</td>
+                  <td>{formatPrice(order.total)}</td>
+                  <td>
+                    <span className={`status-badge ${order.status?.toLowerCase() || 'completed'}`}>
+                      {formatText(order.status)}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="9" className="no-records">
+                  No sales records found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import '../style/modal.css'; // Ensure modal styles exist
+import '../../style/modal.css'; // Ensure modal styles exist
 
 const ConfirmModal = ({ message, onConfirm, onCancel }) => {
     return (

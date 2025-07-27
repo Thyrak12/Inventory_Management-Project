@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchVariants, updateStock } from '../component/api/product_var_api.js';
+import { fetchSalesRecords } from '../component/api/record_api.js';
 import OrderHeader from '../component/order_component/header';
 import OrderFilter from '../component/order_component/filter';
 import OrderCart from '../component/order_component/cart';
@@ -9,6 +10,13 @@ import '../style/order.css';
 
 const OrdersPage = () => {
     const [recentOrders, setRecentOrders] = useState([]);
+    const [pagination, setPagination] = useState({
+        page: 1,
+        limit: 10,
+        totalPages: 0
+    });
+    const [isLoadingRecords, setIsLoadingRecords] = useState(false);
+    const [recordsError, setRecordsError] = useState(null);
     const [cart, setCart] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
@@ -30,7 +38,7 @@ const OrdersPage = () => {
             setError(null);
             try {
                 const variants = await fetchVariants();
-                setProductVariants(variants);
+                setProductVariants(Array.isArray(variants) ? variants : []);
             } catch (error) {
                 console.error('Failed to load product variants:', error);
                 setError('Failed to load products. Please try again.');
@@ -41,8 +49,67 @@ const OrdersPage = () => {
         loadVariants();
     }, []);
 
+    // Fetch sales records with pagination
+        const loadSalesRecords = async (page = 1) => {
+            setIsLoadingRecords(true);
+            setRecordsError(null);
+
+            try {
+                const response = await fetchSalesRecords(page, pagination.limit);
+
+                // Destructure the expected response format
+                const {
+                    data: records = [],
+                    totalItems = 0,
+                    totalPages = 1,
+                    currentPage = 1
+                } = response;
+
+                console.log('API Response:', { records, totalItems, totalPages, currentPage });
+
+                // Transform records if needed (assuming your API already returns them in the correct format)
+                const transformedRecords = Array.isArray(records) ? records : [];
+                console.log(transformedRecords);
+
+                setRecentOrders(transformedRecords);
+                setPagination(prev => ({
+                    ...prev,
+                    page: currentPage,  // Use the currentPage from API response
+                    total: totalItems,   // Total number of items
+                    totalPages          // Total number of pages
+                }));
+
+            } catch (error) {
+                console.error('Failed to load sales records:', error);
+                setRecordsError(error.message || 'Failed to load orders');
+            } finally {
+                setIsLoadingRecords(false);
+            }
+    };
+
+    // Initial load and when page changes
+    useEffect(() => {
+        loadSalesRecords(pagination.page);
+    }, [pagination.page]);
+
+    const handleNextPage = () => {
+        if (pagination.page < pagination.totalPages) {
+            setPagination(prev => ({ ...prev, page: prev.page + 1 }));
+        }
+    };
+
+    const handlePrevPage = () => {
+        if (pagination.page > 1) {
+            setPagination(prev => ({ ...prev, page: prev.page - 1 }));
+        }
+    };
+
     // Group variants by product name (unique names only)
-    const productNames = [...new Set(productVariants.map(v => v.name))];
+    const productNames = [...new Set(
+        (productVariants || [])
+            .map(v => v?.name)
+            .filter(name => typeof name === 'string')
+    )];
 
     // Create select options with just product names
     const productOptions = productNames.map(name => ({
@@ -52,34 +119,32 @@ const OrdersPage = () => {
 
     // When product is selected, find all its variants
     useEffect(() => {
-        if (newOrder.product) {
-            const variants = productVariants.filter(v => v.name === newOrder.product);
-            setSelectedProductVariants(variants);
-
-            // Reset color and size when product changes
-            setNewOrder(prev => ({
-                ...prev,
-                color: '',
-                size: ''
-            }));
+        if (newOrder.product && Array.isArray(productVariants)) {
+            const variants = productVariants.filter(v => v?.name === newOrder.product);
+            setSelectedProductVariants(Array.isArray(variants) ? variants : []);
         } else {
             setSelectedProductVariants([]);
         }
     }, [newOrder.product, productVariants]);
 
     // Get available colors for selected product
-    const availableColors = [...new Set(selectedProductVariants.map(v => v.color))];
+    const availableColors = [...new Set(
+        (selectedProductVariants || [])
+            .map(v => v?.color)
+            .filter(color => typeof color === 'string')
+    )];
 
     // Get available sizes for selected product and color
     const availableSizes = [...new Set(
-        selectedProductVariants
-            .filter(v => !newOrder.color || v.color === newOrder.color)
-            .map(v => v.size)
+        (selectedProductVariants || [])
+            .filter(v => !newOrder.color || v?.color === newOrder.color)
+            .map(v => v?.size)
+            .filter(size => typeof size === 'string')
     )];
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setNewOrder({ ...newOrder, [name]: value });
+        setNewOrder(prev => ({ ...prev, [name]: value }));
     };
 
     const addToCart = () => {
@@ -88,10 +153,10 @@ const OrdersPage = () => {
             return;
         }
 
-        const selectedVariant = productVariants.find(v =>
-            v.name === newOrder.product &&
-            v.color === newOrder.color &&
-            v.size === newOrder.size
+        const selectedVariant = (productVariants || []).find(v =>
+            v?.name === newOrder.product &&
+            v?.color === newOrder.color &&
+            v?.size === newOrder.size
         );
 
         if (!selectedVariant) {
@@ -100,22 +165,24 @@ const OrdersPage = () => {
         }
 
         // Check stock availability
-        if ((selectedVariant.stock || 0) < newOrder.qty) {
-            alert(`Only ${selectedVariant.stock} available in stock`);
+        const currentStock = Number(selectedVariant?.stock) || 0;
+        if (currentStock < newOrder.qty) {
+            alert(`Only ${currentStock} available in stock`);
             return;
         }
 
+        const price = Number(selectedVariant?.price) || 0;
         const cartItem = {
             id: Date.now(),
             product: selectedVariant.name,
             color: selectedVariant.color,
             size: selectedVariant.size,
             qty: newOrder.qty,
-            price: selectedVariant.price || 0,
-            total: ((selectedVariant.price || 0) * newOrder.qty).toFixed(2)
+            price: price,
+            total: (price * newOrder.qty).toFixed(2)
         };
 
-        setCart([...cart, cartItem]);
+        setCart(prev => [...prev, cartItem]);
         setShowAddModal(false);
         setNewOrder({
             product: '',
@@ -126,11 +193,11 @@ const OrdersPage = () => {
     };
 
     const removeFromCart = (id) => {
-        setCart(cart.filter(item => item.id !== id));
+        setCart(prev => prev.filter(item => item.id !== id));
     };
 
     const checkout = async () => {
-        if (cart.length === 0) {
+        if (!Array.isArray(cart) || cart.length === 0) {
             alert('Your cart is empty');
             return;
         }
@@ -140,17 +207,14 @@ const OrdersPage = () => {
 
         try {
             // Create a copy of product variants to modify
-            let updatedVariants = [...productVariants];
+            const updatedVariants = [...(productVariants || [])];
 
             // 1. Update stock for each item in cart
             for (const item of cart) {
-                console.log('Processing cart item:', item);
-                
-                // Find the variant index
                 const variantIndex = updatedVariants.findIndex(v =>
-                    v.name === item.product &&
-                    v.color === item.color &&
-                    v.size === item.size
+                    v?.name === item.product &&
+                    v?.color === item.color &&
+                    v?.size === item.size
                 );
 
                 if (variantIndex === -1) {
@@ -158,22 +222,15 @@ const OrdersPage = () => {
                 }
 
                 const variant = updatedVariants[variantIndex];
-                console.log('Found variant:', variant);
-
-                // Calculate new stock
-                const currentStock = variant.stock || 0;
+                const currentStock = Number(variant?.stock) || 0;
                 const newStock = currentStock - item.qty;
-
-                console.log(`Stock update: ${currentStock} - ${item.qty} = ${newStock}`);
 
                 if (newStock < 0) {
                     throw new Error(`Insufficient stock for ${item.product} (${item.color}, ${item.size})`);
                 }
 
                 // Update via API
-                console.log(`Updating stock for variant ID ${variant.id} to ${newStock}`);
                 await updateStock(variant.id, newStock);
-                console.log('Stock updated successfully');
 
                 // Update local copy
                 updatedVariants[variantIndex] = {
@@ -182,21 +239,27 @@ const OrdersPage = () => {
                 };
             }
 
-            // 2. Create order records
+            // 2. Create new order records for the cart
             const lastOrderID = recentOrders.length > 0 ?
-                Math.max(...recentOrders.map(o => o.orderID)) : 1000;
+                Math.max(...recentOrders.map(o => Number(o?.orderID) || 0)) : 1000;
 
             const newOrders = cart.map((item, index) => ({
                 orderID: lastOrderID + index + 1,
                 date: new Date().toLocaleDateString(),
-                ...item,
+                product: item.product,
+                color: item.color,
+                size: item.size,
+                qty: item.qty,
+                price: item.price,
+                total: item.total,
                 status: 'Completed'
             }));
 
             // 3. Update all state at once
             setProductVariants(updatedVariants);
-            setRecentOrders([...newOrders, ...recentOrders]);
+            setRecentOrders(prev => [...newOrders, ...prev]);
             setCart([]);
+            loadSalesRecords(1); // Refresh to first page
 
             alert('Checkout completed successfully!');
         } catch (error) {
@@ -206,7 +269,7 @@ const OrdersPage = () => {
             // Refresh variants to get current stock levels
             try {
                 const freshVariants = await fetchVariants();
-                setProductVariants(freshVariants);
+                setProductVariants(Array.isArray(freshVariants) ? freshVariants : []);
             } catch (refreshError) {
                 console.error('Failed to refresh variants:', refreshError);
             }
@@ -215,13 +278,22 @@ const OrdersPage = () => {
         }
     };
 
-    const filteredOrders = recentOrders.filter(order =>
-        order.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.orderID.toString().includes(searchTerm) ||
-        order.date.includes(searchTerm)
-    );
+    // Filter orders with safe checks
+    const filteredOrders = (recentOrders || []).filter(order => {
+        const product = String(order?.product || '').toLowerCase();
+        const orderID = String(order?.orderID || '').toLowerCase();
+        const date = String(order?.date || '').toLowerCase();
+        const search = String(searchTerm || '').toLowerCase();
 
-    const cartTotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0).toFixed(2);
+        return product.includes(search) ||
+            orderID.includes(search) ||
+            date.includes(search);
+    });
+
+    // Calculate cart total with safe checks
+    const cartTotal = (cart || []).reduce((sum, item) => {
+        return sum + (Number(item?.total) || 0);
+    }, 0).toFixed(2);
 
     return (
         <div className="orders-page">
@@ -235,8 +307,38 @@ const OrdersPage = () => {
                 cartTotal={cartTotal}
                 onRemoveItem={removeFromCart}
                 onCheckout={checkout}
+                isLoading={isLoading}
             />
-            <OrdersTable orders={filteredOrders} />
+
+            {isLoadingRecords ? (
+                <div className="loading-message">Loading orders...</div>
+            ) : recordsError ? (
+                <div className="error-message">{recordsError}</div>
+            ) : (
+                <>
+                    <OrdersTable orders={filteredOrders} />
+                    <div className="pagination-controls">
+                        <button
+                            onClick={handlePrevPage}
+                            disabled={pagination.page === 1 || isLoadingRecords}
+                        >
+                            Previous
+                        </button>
+
+                        <span>
+                            Page {pagination.page} of {pagination.totalPages}
+                        </span>
+
+                        <button
+                            onClick={handleNextPage}
+                            disabled={pagination.page >= pagination.totalPages || isLoadingRecords}
+                        >
+                            Next
+                        </button>
+                    </div>
+                </>
+            )}
+
             <AddProductModal
                 show={showAddModal}
                 onClose={() => setShowAddModal(false)}

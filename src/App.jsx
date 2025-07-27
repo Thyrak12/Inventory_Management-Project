@@ -1,14 +1,14 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 
-import Header from './component/header.jsx';
+import Header from './page/header.jsx';
 import './App.css';
-import Dashboard from './component/homepage.jsx';
-import ProductsPage from './component/product.jsx';
+import Dashboard from './page/homepage.jsx';
+import ProductsPage from './page/product.jsx';
 import OrdersPage from './page/order.jsx';
-import ReportPage from './component/report.jsx';
-import LoginPage from './component/login.jsx';
+import ReportPage from './page/report.jsx';
+import LoginPage from './auth/login.jsx';
 import PrivateRoute from './component/protected_Routes.jsx';
-import AdminRoute from './component/admin_Routes.jsx';
+import AdminRoute from './auth/admin_Routes.jsx';
 import StockPage from './page/stock.jsx';
 import UserManage from './page/user_manage.jsx';
 
