@@ -40,8 +40,24 @@ export const addProduct = async (productData) => {
 export const updateStock = async (variantId, newStock) => {
     try {
         const token = localStorage.getItem("token");
-        const response = await API.put(`/variants/${variantId}/stock`,
-            { stock: newStock },
+        
+        // First get the current variant to preserve other fields
+        const currentVariant = await API.get(`/product-variants/${variantId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (!currentVariant.data) {
+            throw new Error('Variant not found');
+        }
+        
+        // Update the variant with new stock while preserving other fields
+        const response = await API.put(`/product-variants/${variantId}`,
+            { 
+                product_id: currentVariant.data.product_id,
+                name: currentVariant.data.name,
+                price: currentVariant.data.price,
+                stock: newStock
+            },
             { headers: { Authorization: `Bearer ${token}` } }
         );
 

@@ -144,6 +144,8 @@ const OrdersPage = () => {
 
             // 1. Update stock for each item in cart
             for (const item of cart) {
+                console.log('Processing cart item:', item);
+                
                 // Find the variant index
                 const variantIndex = updatedVariants.findIndex(v =>
                     v.name === item.product &&
@@ -155,20 +157,27 @@ const OrdersPage = () => {
                     throw new Error(`Variant not found for ${item.product} (${item.color}, ${item.size})`);
                 }
 
+                const variant = updatedVariants[variantIndex];
+                console.log('Found variant:', variant);
+
                 // Calculate new stock
-                const currentStock = updatedVariants[variantIndex].stock || 0;
+                const currentStock = variant.stock || 0;
                 const newStock = currentStock - item.qty;
+
+                console.log(`Stock update: ${currentStock} - ${item.qty} = ${newStock}`);
 
                 if (newStock < 0) {
                     throw new Error(`Insufficient stock for ${item.product} (${item.color}, ${item.size})`);
                 }
 
                 // Update via API
-                await updateStock(updatedVariants[variantIndex].id, newStock);
+                console.log(`Updating stock for variant ID ${variant.id} to ${newStock}`);
+                await updateStock(variant.id, newStock);
+                console.log('Stock updated successfully');
 
                 // Update local copy
                 updatedVariants[variantIndex] = {
-                    ...updatedVariants[variantIndex],
+                    ...variant,
                     stock: newStock
                 };
             }

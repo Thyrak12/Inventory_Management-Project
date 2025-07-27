@@ -2,7 +2,7 @@ import API from '../../api.js';
 
 export const fetchSales = async () => {
     try {
-        const response = await API.get('/sales-records');
+        const response = await API.get('/sales');
 
         if (!response || !response.data) {
             throw new Error('No data received from server');
