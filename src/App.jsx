@@ -3,10 +3,11 @@ import Header from './component/header.jsx';
 import './App.css';
 import Dashboard from './component/homepage.jsx';
 import ProductsPage from './component/product.jsx';
-import OrdersPage from './component/order.jsx';
+import OrdersPage from './page/order.jsx';
 import ReportPage from './component/report.jsx';
 import LoginPage from './component/login.jsx';
 import PrivateRoute from './component/protected_Routes.jsx';
+import StockPage from './page/stock.jsx';
 
 function AppContent() {
   const location = useLocation();
@@ -38,6 +39,14 @@ function AppContent() {
             element={
               <PrivateRoute>
                 <ProductsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/stock"
+            element={
+              <PrivateRoute>
+                <StockPage />
               </PrivateRoute>
             }
           />

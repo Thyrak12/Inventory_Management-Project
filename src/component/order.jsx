@@ -1,20 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaSearch, FaPlus, FaEdit, FaTimes, FaShoppingCart } from 'react-icons/fa';
+import { fetchVariants } from './api/product_var_api.js';
 import '../style/order.css';
 
+const SearchableSelect = ({ 
+  options, 
+  value, 
+  onChange, 
+  placeholder = "Search...",
+  name,
+  required = false
+}) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+
+  const filteredOptions = options.filter(option =>
+    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSelect = (value) => {
+    onChange({ target: { name, value } });
+    setIsOpen(false);
+    setSearchTerm("");
+  };
+
+  return (
+    <div className="searchable-select">
+      <div 
+        className="select-input" 
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {value || placeholder}
+      </div>
+      
+      {isOpen && (
+        <div className="select-dropdown">
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder={placeholder}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="options-list">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => (
+                <div
+                  key={option.value}
+                  className={`option ${value === option.value ? 'selected' : ''}`}
+                  onClick={() => handleSelect(option.value)}
+                >
+                  {option.label}
+                </div>
+              ))
+            ) : (
+              <div className="no-results">No products found</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const OrdersPage = () => {
-  // Product data with prices
-  const products = [
-    { id: 1, name: 'T-Shirt', price: 19.99 },
-    { id: 2, name: 'Jeans', price: 49.99 },
-    { id: 3, name: 'Sneakers', price: 89.99 },
-    { id: 4, name: 'Hat', price: 24.99 },
-    { id: 5, name: 'Jacket', price: 79.99 }
-  ];
-
-  const colors = ['Red', 'Blue', 'Green', 'Black', 'White'];
-  const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
-
   const [recentOrders, setRecentOrders] = useState([]);
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,6 +76,64 @@ const OrdersPage = () => {
     size: '',
     qty: 1
   });
+  const [productVariants, setProductVariants] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedProductVariants, setSelectedProductVariants] = useState([]);
+
+  // Fetch product variants from API
+  useEffect(() => {
+    const loadVariants = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const variants = await fetchVariants();
+        setProductVariants(variants);
+      } catch (error) {
+        console.error('Failed to load product variants:', error);
+        setError('Failed to load products. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadVariants();
+  }, []);
+
+  // Group variants by product name (unique names only)
+  const productNames = [...new Set(productVariants.map(v => v.name))];
+
+  // Create select options with just product names
+  const productOptions = productNames.map(name => ({
+    value: name,
+    label: name
+  }));
+
+  // When product is selected, find all its variants
+  useEffect(() => {
+    if (newOrder.product) {
+      const variants = productVariants.filter(v => v.name === newOrder.product);
+      setSelectedProductVariants(variants);
+      
+      // Reset color and size when product changes
+      setNewOrder(prev => ({
+        ...prev,
+        color: '',
+        size: ''
+      }));
+    } else {
+      setSelectedProductVariants([]);
+    }
+  }, [newOrder.product, productVariants]);
+
+  // Get available colors for selected product
+  const availableColors = [...new Set(selectedProductVariants.map(v => v.color))];
+
+  // Get available sizes for selected product and color
+  const availableSizes = [...new Set(
+    selectedProductVariants
+      .filter(v => !newOrder.color || v.color === newOrder.color)
+      .map(v => v.size)
+  )];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -32,17 +141,31 @@ const OrdersPage = () => {
   };
 
   const addToCart = () => {
-    if (!newOrder.product || newOrder.qty <= 0) {
+    if (!newOrder.product || !newOrder.color || !newOrder.size || newOrder.qty <= 0) {
       alert('Please fill all required fields');
       return;
     }
 
-    const selectedProduct = products.find(p => p.name === newOrder.product);
+    // Find the exact variant
+    const selectedVariant = productVariants.find(v => 
+      v.name === newOrder.product && 
+      v.color === newOrder.color && 
+      v.size === newOrder.size
+    );
+
+    if (!selectedVariant) {
+      alert('Selected product variant not found');
+      return;
+    }
+
     const cartItem = {
-      id: Date.now(), // Unique ID for cart item
-      ...newOrder,
-      price: selectedProduct.price,
-      total: (selectedProduct.price * newOrder.qty).toFixed(2)
+      id: Date.now(),
+      product: selectedVariant.name,
+      color: selectedVariant.color,
+      size: selectedVariant.size,
+      qty: newOrder.qty,
+      price: selectedVariant.price || 0,
+      total: ((selectedVariant.price || 0) * newOrder.qty).toFixed(2)
     };
 
     setCart([...cart, cartItem]);
@@ -65,7 +188,6 @@ const OrdersPage = () => {
       return;
     }
 
-    // Generate order IDs
     const lastOrderID = recentOrders.length > 0 ? 
       Math.max(...recentOrders.map(o => o.orderID)) : 1000;
       
@@ -76,10 +198,7 @@ const OrdersPage = () => {
       status: 'Completed'
     }));
 
-    // Add to recent orders
     setRecentOrders([...newOrders, ...recentOrders]);
-    
-    // Clear cart
     setCart([]);
     alert('Checkout completed successfully!');
   };
@@ -184,7 +303,7 @@ const OrdersPage = () => {
                   <td>{order.color}</td>
                   <td>{order.size}</td>
                   <td>{order.qty}</td>
-                  <td>${order.price.toFixed(2)}</td>
+                  <td>${order.price?.toFixed(2)}</td>
                   <td>${order.total}</td>
                   <td>
                     <span className={`status-badge ${order.status.toLowerCase()}`}>
@@ -209,71 +328,88 @@ const OrdersPage = () => {
               </button>
             </div>
             
-            <div className="form-group">
-              <label>Product <span className="required">*</span></label>
-              <select
-                name="product"
-                value={newOrder.product}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select Product</option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.name}>
-                    {product.name} (${product.price.toFixed(2)})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {error ? (
+              <div className="error-message">{error}</div>
+            ) : isLoading ? (
+              <div className="loading-spinner">Loading products...</div>
+            ) : productOptions.length === 0 ? (
+              <div className="no-products">No products available</div>
+            ) : (
+              <>
+                <div className="form-group">
+                  <label>Product <span className="required">*</span></label>
+                  <SearchableSelect
+                    name="product"
+                    value={newOrder.product}
+                    onChange={handleInputChange}
+                    placeholder="Select product"
+                    required
+                    options={productOptions}
+                  />
+                </div>
 
-            <div className="form-group">
-              <label>Color</label>
-              <select
-                name="color"
-                value={newOrder.color}
-                onChange={handleInputChange}
-              >
-                <option value="">Select Color</option>
-                {colors.map((color, index) => (
-                  <option key={index} value={color}>{color}</option>
-                ))}
-              </select>
-            </div>
+                {newOrder.product && (
+                  <>
+                    <div className="form-group">
+                      <label>Color <span className="required">*</span></label>
+                      <select
+                        name="color"
+                        value={newOrder.color}
+                        onChange={handleInputChange}
+                        required
+                      >
+                        <option value="">Select Color</option>
+                        {availableColors.map((color, index) => (
+                          <option key={index} value={color}>{color}</option>
+                        ))}
+                      </select>
+                    </div>
 
-            <div className="form-group">
-              <label>Size</label>
-              <select
-                name="size"
-                value={newOrder.size}
-                onChange={handleInputChange}
-              >
-                <option value="">Select Size</option>
-                {sizes.map((size, index) => (
-                  <option key={index} value={size}>{size}</option>
-                ))}
-              </select>
-            </div>
+                    {newOrder.color && (
+                      <div className="form-group">
+                        <label>Size <span className="required">*</span></label>
+                        <select
+                          name="size"
+                          value={newOrder.size}
+                          onChange={handleInputChange}
+                          required
+                        >
+                          <option value="">Select Size</option>
+                          {availableSizes.map((size, index) => (
+                            <option key={index} value={size}>{size}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </>
+                )}
 
-            <div className="form-group">
-              <label>Quantity <span className="required">*</span></label>
-              <input
-                type="number"
-                name="qty"
-                value={newOrder.qty}
-                onChange={handleInputChange}
-                min="1"
-                required
-              />
-            </div>
+                <div className="form-group">
+                  <label>Quantity <span className="required">*</span></label>
+                  <input
+                    type="number"
+                    name="qty"
+                    value={newOrder.qty}
+                    onChange={handleInputChange}
+                    min="1"
+                    required
+                  />
+                </div>
 
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setShowAddModal(false)}>
-                Cancel
-              </button>
-              <button className="confirm-btn" onClick={addToCart}>
-                Add to Sale
-              </button>
-            </div>
+                <div className="modal-actions">
+                  <button className="cancel-btn" onClick={() => setShowAddModal(false)}>
+                    Cancel
+                  </button>
+                  <button 
+                    className="confirm-btn" 
+                    onClick={addToCart}
+                    disabled={!newOrder.product || !newOrder.color || !newOrder.size || newOrder.qty <= 0}
+                  >
+                    Add to Sale
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -17,8 +17,9 @@ const InventorySidebar = () => {
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: <FaTachometerAlt className="icon" /> },
     { path: '/products', label: 'Products', icon: <FaBoxes className="icon" /> },
+    { path: '/stock', label: 'Stock', icon: <FaBoxes className="icon" /> },
     { path: '/orders', label: 'Orders', icon: <FaClipboardList className="icon" /> },
-    { path: '/customers', label: 'Customer', icon: <FaChartBar className="icon" /> },
+    { path: '/users', label: 'Users Management', icon: <FaClipboardList className="icon" /> },
     { path: '/reports', label: 'Reports', icon: <FaChartBar className="icon" /> }
   ];
 

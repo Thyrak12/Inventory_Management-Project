@@ -1,61 +1,109 @@
 import React from 'react';
+import { FaTimes } from 'react-icons/fa';
 import '../style/modal.css';
 
-const UpdateProductModal = ({ onClose, newProduct, setNewProduct, onSubmit }) => {
+const UpdateProductModal = ({ 
+  show,
+  onClose, 
+  product, 
+  onChange, 
+  onSubmit,
+  isLoading
+}) => {
+  if (!show) return null;
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    onChange({ ...product, [name]: value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(e);
+  };
+
   return (
     <div className="modal-overlay">
-      <div className="modal">
-        <h2>Update Product</h2>
-        <form onSubmit={onSubmit} className="modal-form">
-          <label>
-            Name:
+      <div className="modal-content">
+        <div className="modal-header">
+          <h2>Update Product</h2>
+          <button 
+            className="close-modal" 
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            <FaTimes />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="modal-form">
+          <div className="form-group">
+            <label htmlFor="productID">Product ID *</label>
             <input
+              id="productID"
               type="text"
-              value={newProduct.name}
-              onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+              name="productID"
+              value={product.productID}
+              onChange={handleChange}
               required
+              disabled={isLoading}
             />
-          </label>
-          <label>
-            SKU:
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="name">Product Name *</label>
             <input
+              id="name"
               type="text"
-              value={newProduct.sku}
-              onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
+              name="name"
+              value={product.name}
+              onChange={handleChange}
               required
+              disabled={isLoading}
             />
-          </label>
-          <label>
-            Category:
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="description">Description</label>
+            <textarea
+              id="description"
+              name="description"
+              value={product.description}
+              onChange={handleChange}
+              rows="3"
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="category">Category *</label>
             <input
+              id="category"
               type="text"
-              value={newProduct.category}
-              onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-            />
-          </label>
-          <label>
-            Price:
-            <input
-              type="number"
-              step="0.01"
-              value={newProduct.price}
-              onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+              name="category"
+              value={product.category}
+              onChange={handleChange}
               required
+              disabled={isLoading}
             />
-          </label>
-          <label>
-            Quantity:
-            <input
-              type="number"
-              value={newProduct.quantity}
-              onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })}
-              required
-            />
-          </label>
+          </div>
 
           <div className="modal-actions">
-            <button type="submit" className="submit-btn">Update</button>
-            <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
+            <button 
+              type="button"
+              className="cancel-btn" 
+              onClick={onClose}
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              className="confirm-btn"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Updating...' : 'Update Product'}
+            </button>
           </div>
         </form>
       </div>
