@@ -1,6 +1,5 @@
 import API from '../../api.js';
 
-// In your api.js or product_var_api.js
 export const fetchSalesRecords = async (page = 1, limit = 10) => {
     try {
         const response = await API.get('/sales-records', {
@@ -103,6 +102,21 @@ export const deleteSaleRecord = async (id) => {
         return true;
     } catch (error) {
         console.error('API Error - deleteSaleRecord:', error.message);
+        throw error;
+    }
+};
+
+export const addSaleRecord = async (recordData) => {
+    try {
+        const response = await API.post('/sales-records', recordData);
+
+        if (response.status !== 201 || !response.data) {
+            throw new Error('Failed to create saleRecord');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('API Error - addSaleRecord:', error.message);
         throw error;
     }
 };

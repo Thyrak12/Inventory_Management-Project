@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchVariants, updateStock } from '../component/api/product_var_api.js';
-import { fetchSalesRecords } from '../component/api/record_api.js';
+import { fetchSalesRecords, addSaleRecord } from '../component/api/record_api.js';
 import OrderHeader from '../component/order_component/header';
 import OrderFilter from '../component/order_component/filter';
 import OrderCart from '../component/order_component/cart';
@@ -50,41 +50,41 @@ const OrdersPage = () => {
     }, []);
 
     // Fetch sales records with pagination
-        const loadSalesRecords = async (page = 1) => {
-            setIsLoadingRecords(true);
-            setRecordsError(null);
+    const loadSalesRecords = async (page = 1) => {
+        setIsLoadingRecords(true);
+        setRecordsError(null);
 
-            try {
-                const response = await fetchSalesRecords(page, pagination.limit);
+        try {
+            const response = await fetchSalesRecords(page, pagination.limit);
 
-                // Destructure the expected response format
-                const {
-                    data: records = [],
-                    totalItems = 0,
-                    totalPages = 1,
-                    currentPage = 1
-                } = response;
+            // Destructure the expected response format
+            const {
+                data: records = [],
+                totalItems = 0,
+                totalPages = 1,
+                currentPage = 1
+            } = response;
 
-                console.log('API Response:', { records, totalItems, totalPages, currentPage });
+            console.log('API Response:', { records, totalItems, totalPages, currentPage });
 
-                // Transform records if needed (assuming your API already returns them in the correct format)
-                const transformedRecords = Array.isArray(records) ? records : [];
-                console.log(transformedRecords);
+            // Transform records if needed (assuming your API already returns them in the correct format)
+            const transformedRecords = Array.isArray(records) ? records : [];
+            console.log(transformedRecords);
 
-                setRecentOrders(transformedRecords);
-                setPagination(prev => ({
-                    ...prev,
-                    page: currentPage,  // Use the currentPage from API response
-                    total: totalItems,   // Total number of items
-                    totalPages          // Total number of pages
-                }));
+            setRecentOrders(transformedRecords);
+            setPagination(prev => ({
+                ...prev,
+                page: currentPage,  // Use the currentPage from API response
+                total: totalItems,   // Total number of items
+                totalPages          // Total number of pages
+            }));
 
-            } catch (error) {
-                console.error('Failed to load sales records:', error);
-                setRecordsError(error.message || 'Failed to load orders');
-            } finally {
-                setIsLoadingRecords(false);
-            }
+        } catch (error) {
+            console.error('Failed to load sales records:', error);
+            setRecordsError(error.message || 'Failed to load orders');
+        } finally {
+            setIsLoadingRecords(false);
+        }
     };
 
     // Initial load and when page changes
@@ -174,12 +174,13 @@ const OrdersPage = () => {
         const price = Number(selectedVariant?.price) || 0;
         const cartItem = {
             id: Date.now(),
+            variantId: selectedVariant.id,
             product: selectedVariant.name,
             color: selectedVariant.color,
             size: selectedVariant.size,
-            qty: newOrder.qty,
-            price: price,
-            total: (price * newOrder.qty).toFixed(2)
+            qty: parseInt(newOrder.qty, 10), // Ensure integer
+            price: selectedVariant.price.toString(), // Ensure float
+            total: (parseFloat(selectedVariant.price) * parseInt(newOrder.qty, 10)).toFixed(2)
         };
 
         setCart(prev => [...prev, cartItem]);
@@ -211,11 +212,7 @@ const OrdersPage = () => {
 
             // 1. Update stock for each item in cart
             for (const item of cart) {
-                const variantIndex = updatedVariants.findIndex(v =>
-                    v?.name === item.product &&
-                    v?.color === item.color &&
-                    v?.size === item.size
-                );
+                const variantIndex = updatedVariants.findIndex(v => v?.id === item.variantId);
 
                 if (variantIndex === -1) {
                     throw new Error(`Variant not found for ${item.product} (${item.color}, ${item.size})`);
@@ -243,6 +240,22 @@ const OrdersPage = () => {
             const lastOrderID = recentOrders.length > 0 ?
                 Math.max(...recentOrders.map(o => Number(o?.orderID) || 0)) : 1000;
 
+            // Prepare sales records data for API
+            const salesRecordsData = cart.map((item, index) => ({
+                product_variant_id: item.variantId, // Include variant ID
+                quantity: item.qty,
+                price: item.price,
+            }));
+
+            console.log(Array.isArray(salesRecordsData));
+
+            // 3. Send sales records to API
+            for (const record of salesRecordsData) {
+                await addSaleRecord(record);
+                
+            }
+
+            // 4. Update UI with the new orders
             const newOrders = cart.map((item, index) => ({
                 orderID: lastOrderID + index + 1,
                 date: new Date().toLocaleDateString(),
@@ -255,7 +268,7 @@ const OrdersPage = () => {
                 status: 'Completed'
             }));
 
-            // 3. Update all state at once
+            // 5. Update all state at once
             setProductVariants(updatedVariants);
             setRecentOrders(prev => [...newOrders, ...prev]);
             setCart([]);
